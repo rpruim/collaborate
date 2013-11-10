@@ -1,0 +1,17 @@
+Package: collaborate
+Type: Package
+Title: Utilities for collaborative file editing using Firepad
+Version: 0.1
+Date: 2013-11-09
+Author: Daniel Kaplan
+Maintainer: Randall Pruim <rpruim@calvin.edu>
+Description: Implements collaborative editing using Firepad
+Depends:
+    jpeg,
+    png,
+    RCurl,
+    knitr,
+    markdown
+License: AGPL-3
+Collate:
+    'collaborate.R'
