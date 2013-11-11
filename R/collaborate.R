@@ -14,21 +14,32 @@
 #' Dont' forget the file extension.
 #' @param group a character string naming the Firepad group in which the document will be housed. 
 #' @param project a character string naming the project. 
-#' @baram uffermode a string, either \code{"Markdown"} or \code{"r"}.
-#' (This may be extended in the future to include other allowable modes for the CodeMirror editor.
-#' 
+#' @param buffermode a string, either \code{"Markdown"} or \code{"r"}.
+#' (This may be extended in the future to include other allowable modes for the CodeMirror editor.)
+#' @param where either \code{"web"} or \code{"local"} indicating which version is to be edited
+#' @param firepad a character string specifying the base URL for the firepad server
+#' @param object an object
+#' @param x and object
+#' @param local a logical
+#' @param \dots additional arguments 
 #' @export
 #' @examples
-#' options(collaborate = list( group="mosaic-web", project="CS121") )
+#' options(collaborate = list( firepad="http://www.mosaic-web.org/go", group="mosaic-web", project="CS121") )
 #' myProject <- collaborate(name="example000")
+#' summary(myProject)
 #' 
 collaborate <- function(
   name, 
+  localdoc=file.path(getwd(),paste0(name,".Rmd")),
+  buffermode=c("Markdown", "r"), 
   project = getOption("collaborate")$project,
   group=getOption("collaborate")$group,
-  localdoc=file.path(getwd(),paste0(name,".Rmd")),
-  buffermode=c("Markdown", "r")) {
-  
+  firepad=getOption("collaborate")$firepad
+) {
+
+  if (is.null(firepad)) {
+    stop("No firepad specified.")
+  }
   if (is.null(project) || is.null(group)) {
     stop("Missing 'project' and/or 'group' with no defaults.")
   }
@@ -38,20 +49,22 @@ collaborate <- function(
   
   buffermode <- match.arg(buffermode)
   
-  if( !require(RCurl) ) stop("Must install 'RCurl' package.")
-  if( !require(markdown) ) stop("Must install 'markdown' package.")
+#  if( !require(RCurl) ) stop("Must install 'RCurl' package.")
+#  if( !require(markdown) ) stop("Must install 'markdown' package.")
   if (missing(name))
     stop("Must specify name of collaborative buffer as the 'name' argument.")
   docURL <- paste('https://', group,
                   '.firebaseio.com/', project,'/',
                   name, '/first/.json?pretty=TRUE', sep='')
-  editBufferURL <- paste("http://www.mosaic-web.org/go/firepad/examples/teamedit.html?project=",project,"&doc=",name,"&mode=",buffermode,sep="")
-  synchronizeBufferURL <- paste("http://www.mosaic-web.org/go/firepad/examples/updateFirepad.html?project=",project,"&doc=",name,sep="")
-
+  editBufferURL <- paste0(firepad,"/firepad/examples/teamedit.html?project=", project, 
+                          "&doc=", name, "&mode=", buffermode)
+  synchronizeBufferURL <- paste0(firepad, "/firepad/examples/updateFirepad.html?project=",
+                                 project, "&doc=", name)
   return( 
     structure( list( 
       project = project,
       group = group,
+      firepad = firepad,
       buffermode = buffermode,
       localdoc = localdoc,
       docURL = docURL,
@@ -63,10 +76,8 @@ collaborate <- function(
 
 #' @rdname collaborate
 #' 
-#' @param name a collaborative editing object
-#' @param where either \code{"web"} or \code{"local"} indicating which version is to be edited
-#' @param \dots additional arguments -- currently ignored.
 #' @export
+#' @method edit collaborativeDoc
 #' 
 edit.collaborativeDoc <- function(name, where=c("web", "local"), ...) {
   where <- match.arg(where)
@@ -81,17 +92,19 @@ edit.collaborativeDoc <- function(name, where=c("web", "local"), ...) {
 
 #' @rdname collaborate
 #' @export
-#' 
-load <- function(...) {
+ 
+load <- function(object, ...) {
   UseMethod("load")
 }
 
 #' @rdname collaborate
 #' @export
-load.default <- base::load
+#' @method load default
+load.default <- function(object,...) base::load(object,...)
 
 #' @rdname collaborate
 #' @export
+#' @method load collaborativeDoc
 load.collaborativeDoc <- function(object, ...) {
     content <- getURL(object$docURL)
     # Get rid of the opening and closing quotes
@@ -109,10 +122,12 @@ source <- function(...) {
 
 #' @rdname collaborate
 #' @export
-source.default <- base::source
+#' @method source default
+source.default <- function(...) base::source(...)
 
 #' @rdname collaborate
 #' @export
+#' @method source collaborativeDoc
 source.collaborativeDoc <- function(object, local=FALSE, ...) {
   content <- load(object)
   if (local) { 
@@ -130,6 +145,7 @@ knit <- function(object, ...) {
 
 #' @rdname collaborate
 #' @export
+#' @method knit collaborativeDoc
 knit.collaborativeDoc <- function( object, ... ) { 
   tmpNames <- paste("team-edit-", object$project, "-", object$name, 
                      c(".html",".md",".Rmd"), sep="") 
@@ -145,11 +161,18 @@ knit.collaborativeDoc <- function( object, ... ) {
 
 #' @rdname collaborate
 #' @export
+#' @method summary collaborativeDoc
 summary.collaborativeDoc <- function(object, ...) {
-  return(
-    list(project=object$project, 
-         group=object$group, 
-         doc=object$name, 
-         localdoc=object$localdoc)
-    )
+  names <- c("project", "group", "docURL", "localdoc", "firepad")
+  cat("  Firepad collaborative document.\n")
+  for (nn in names) {
+    cat(paste0( "    ", nn, ": ", object[[nn]], "\n"))
+  }
+}
+
+#' @rdname collaborate
+#' @export
+#' @method print collaborativeDoc
+print.collaborativeDoc <- function(x, ...) {
+  return(summary(x))
 }

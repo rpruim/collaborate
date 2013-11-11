@@ -11,7 +11,8 @@ Depends:
     png,
     RCurl,
     knitr,
-    markdown
+    markdown,
+    base
 License: AGPL-3
 Collate:
     'collaborate.R'

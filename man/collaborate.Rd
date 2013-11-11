@@ -6,6 +6,7 @@
 \alias{load}
 \alias{load.collaborativeDoc}
 \alias{load.default}
+\alias{print.collaborativeDoc}
 \alias{source}
 \alias{source.collaborativeDoc}
 \alias{source.default}
@@ -13,38 +14,35 @@
 \title{Create and edit document collaboratively}
 \usage{
   collaborate(name,
+    localdoc = file.path(getwd(), paste0(name, ".Rmd")),
+    buffermode = c("Markdown", "r"),
     project = getOption("collaborate")$project,
     group = getOption("collaborate")$group,
-    localdoc = file.path(getwd(), paste0(name, ".Rmd")),
-    buffermode = c("Markdown", "r"))
+    firepad = getOption("collaborate")$firepad)
 
-  edit.collaborativeDoc(name, where = c("web", "local"),
-    ...)
+  \method{edit}{collaborativeDoc} (name,
+    where = c("web", "local"), ...)
 
-  load(...)
+  load(object, ...)
 
-  load.default(file, envir = parent.frame(),
-    verbose = FALSE)
+  \method{load}{default} (object, ...)
 
-  load.collaborativeDoc(object, ...)
+  \method{load}{collaborativeDoc} (object, ...)
 
   source(...)
 
-  source.default(file, local = FALSE, echo = verbose,
-    print.eval = echo, verbose = getOption("verbose"),
-    prompt.echo = getOption("prompt"),
-    max.deparse.length = 150, chdir = FALSE,
-    encoding = getOption("encoding"),
-    continue.echo = getOption("continue"), skip.echo = 0,
-    keep.source = getOption("keep.source"))
+  \method{source}{default} (...)
 
-  source.collaborativeDoc(object, local = FALSE, ...)
+  \method{source}{collaborativeDoc} (object, local = FALSE,
+    ...)
 
   knit(object, ...)
 
-  knit.collaborativeDoc(object, ...)
+  \method{knit}{collaborativeDoc} (object, ...)
 
-  summary.collaborativeDoc(object, ...)
+  \method{summary}{collaborativeDoc} (object, ...)
+
+  \method{print}{collaborativeDoc} (x, ...)
 }
 \arguments{
   \item{name}{a character string naming the document in the
@@ -66,19 +64,32 @@
 
   \item{project}{a character string naming the project.}
 
-  \item{name}{a collaborative editing object}
+  \item{buffermode}{a string, either \code{"Markdown"} or
+  \code{"r"}. (This may be extended in the future to
+  include other allowable modes for the CodeMirror
+  editor.)}
 
   \item{where}{either \code{"web"} or \code{"local"}
   indicating which version is to be edited}
 
-  \item{\dots}{additional arguments -- currently ignored.}
+  \item{firepad}{a character string specifying the base URL
+  for the firepad server}
+
+  \item{object}{an object}
+
+  \item{x}{and object}
+
+  \item{local}{a logical}
+
+  \item{\dots}{additional arguments}
 }
 \description{
   These objects and functions provide an R interface to
   Firepad collaborative documents.
 }
 \examples{
-options(collaborate = list( group="mosaic-web", project="CS121") )
+options(collaborate = list( firepad="http://www.mosaic-web.org/go", group="mosaic-web", project="CS121") )
 myProject <- collaborate(name="example000")
+summary(myProject)
 }
 
